@@ -1,15 +1,19 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
+import { ConfigService } from '../../../core/services/config.service';
 import { Flat, FlatFilter, Tower } from '../../../core/models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FlatService {
-  private readonly apiUrl = `${environment.apiUrl}`;
+  private configService = inject(ConfigService);
   private http = inject(HttpClient);
+
+  private get apiUrl(): string {
+    return this.configService.apiUrl;
+  }
 
   getFlats(filter?: FlatFilter): Observable<Flat[]> {
     let params = new HttpParams();

@@ -25,3 +25,8 @@ docker-compose.override.yml
 
 # Kiro
 .kiro/
+
+# GCP
+gcloud-service-key.json
+*.json.enc
+service-account-*.json

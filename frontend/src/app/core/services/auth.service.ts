@@ -1,8 +1,8 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { ConfigService } from './config.service';
 import { User, LoginRequest, RegisterRequest, AuthResponse } from '../models';
 
 const TOKEN_KEY = 'auth_token';
@@ -12,7 +12,11 @@ const USER_KEY = 'auth_user';
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly apiUrl = `${environment.apiUrl}/auth`;
+  private configService = inject(ConfigService);
+  
+  private get apiUrl(): string {
+    return `${this.configService.apiUrl}/auth`;
+  }
   
   private currentUserSignal = signal<User | null>(this.loadUserFromStorage());
   

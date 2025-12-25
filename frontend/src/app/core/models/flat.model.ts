@@ -1,3 +1,5 @@
+import { Amenity } from './amenity.model';
+
 export interface Tower {
   id: number;
   name: string;
@@ -6,15 +8,6 @@ export interface Tower {
   flats_per_floor: number;
   amenities?: Amenity[];
   amenity_ids?: number[];
-}
-
-export interface Amenity {
-  id: number;
-  name: string;
-  type: 'gym' | 'pool' | 'parking' | 'common';
-  description: string | null;
-  hours: string | null;
-  fee: number | null;
 }
 
 export interface Flat {

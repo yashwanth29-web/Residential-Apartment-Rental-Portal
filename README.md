@@ -8,6 +8,7 @@ A full-stack web application for residential apartment rental management. Users 
 - **Backend**: Python Flask REST API
 - **Database**: Neon PostgreSQL
 - **Containerization**: Docker & Docker Compose
+- **Cloud Deployment**: Google Cloud Run
 
 ## Prerequisites
 
@@ -258,3 +259,145 @@ docker-compose up --build
 ## License
 
 MIT License
+
+---
+
+## GCP Cloud Run Deployment
+
+### Prerequisites
+
+1. [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) installed
+2. A GCP project with billing enabled
+3. Docker installed locally
+
+### Quick Deploy
+
+#### Windows (PowerShell)
+
+```powershell
+# Set environment variables
+$env:DATABASE_URL = "postgresql+psycopg://user:pass@host/db?sslmode=require"
+$env:JWT_SECRET_KEY = "your-production-secret-key"
+
+# Deploy
+.\deploy-cloudrun.ps1 -ProjectId "your-gcp-project-id" -Region "us-central1"
+```
+
+#### Linux/Mac (Bash)
+
+```bash
+# Set environment variables
+export DATABASE_URL="postgresql+psycopg://user:pass@host/db?sslmode=require"
+export JWT_SECRET_KEY="your-production-secret-key"
+
+# Make script executable and deploy
+chmod +x deploy-cloudrun.sh
+./deploy-cloudrun.sh your-gcp-project-id us-central1
+```
+
+### Manual Deployment Steps
+
+#### 1. Authenticate with GCP
+
+```bash
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+```
+
+#### 2. Enable Required APIs
+
+```bash
+gcloud services enable cloudbuild.googleapis.com
+gcloud services enable run.googleapis.com
+gcloud services enable containerregistry.googleapis.com
+```
+
+#### 3. Configure Docker for GCR
+
+```bash
+gcloud auth configure-docker
+```
+
+#### 4. Build and Push Backend
+
+```bash
+cd backend
+docker build -t gcr.io/YOUR_PROJECT_ID/apartment-backend:latest -f Dockerfile.cloudrun .
+docker push gcr.io/YOUR_PROJECT_ID/apartment-backend:latest
+```
+
+#### 5. Deploy Backend to Cloud Run
+
+```bash
+gcloud run deploy apartment-backend \
+    --image gcr.io/YOUR_PROJECT_ID/apartment-backend:latest \
+    --region us-central1 \
+    --platform managed \
+    --allow-unauthenticated \
+    --set-env-vars "DATABASE_URL=YOUR_DATABASE_URL,JWT_SECRET_KEY=YOUR_SECRET" \
+    --memory 512Mi
+```
+
+#### 6. Get Backend URL
+
+```bash
+BACKEND_URL=$(gcloud run services describe apartment-backend --region=us-central1 --format='value(status.url)')
+echo $BACKEND_URL
+```
+
+#### 7. Build and Push Frontend
+
+```bash
+cd frontend
+docker build -t gcr.io/YOUR_PROJECT_ID/apartment-frontend:latest -f Dockerfile.cloudrun .
+docker push gcr.io/YOUR_PROJECT_ID/apartment-frontend:latest
+```
+
+#### 8. Deploy Frontend to Cloud Run
+
+```bash
+gcloud run deploy apartment-frontend \
+    --image gcr.io/YOUR_PROJECT_ID/apartment-frontend:latest \
+    --region us-central1 \
+    --platform managed \
+    --allow-unauthenticated \
+    --set-env-vars "BACKEND_URL=$BACKEND_URL" \
+    --memory 256Mi
+```
+
+### CI/CD with Cloud Build
+
+The project includes a `cloudbuild.yaml` for automated deployments:
+
+```bash
+# Trigger a build manually
+gcloud builds submit --config=cloudbuild.yaml \
+    --substitutions=_DATABASE_URL="your-db-url",_JWT_SECRET_KEY="your-secret"
+```
+
+### Cloud Run Configuration Files
+
+| File | Description |
+|------|-------------|
+| `backend/Dockerfile.cloudrun` | Backend Dockerfile optimized for Cloud Run |
+| `frontend/Dockerfile.cloudrun` | Frontend Dockerfile optimized for Cloud Run |
+| `frontend/nginx.cloudrun.conf` | Nginx config with dynamic backend URL |
+| `cloudbuild.yaml` | Cloud Build CI/CD configuration |
+| `deploy-cloudrun.sh` | Bash deployment script |
+| `deploy-cloudrun.ps1` | PowerShell deployment script |
+
+### Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DATABASE_URL` | PostgreSQL connection string (use `postgresql+psycopg://` prefix) | Yes |
+| `JWT_SECRET_KEY` | Secret key for JWT token signing | Yes |
+| `BACKEND_URL` | Backend service URL (auto-set for frontend) | Auto |
+
+### Cost Optimization
+
+Cloud Run charges only for actual usage. To minimize costs:
+
+- `min-instances: 0` - Scale to zero when not in use
+- `max-instances: 10` - Limit maximum instances
+- Use appropriate memory settings (512Mi backend, 256Mi frontend)

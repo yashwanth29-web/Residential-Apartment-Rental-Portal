@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
+import { ConfigService } from '../../../core/services/config.service';
 
 export interface Booking {
   id: number;
@@ -37,8 +37,12 @@ export interface CreateBookingRequest {
   providedIn: 'root'
 })
 export class BookingService {
-  private readonly apiUrl = `${environment.apiUrl}/bookings`;
+  private configService = inject(ConfigService);
   private http = inject(HttpClient);
+
+  private get apiUrl(): string {
+    return `${this.configService.apiUrl}/bookings`;
+  }
 
   getBookings(): Observable<Booking[]> {
     return this.http.get<Booking[]>(this.apiUrl);

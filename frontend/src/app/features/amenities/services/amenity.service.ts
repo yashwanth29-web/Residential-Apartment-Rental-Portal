@@ -1,15 +1,19 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
+import { ConfigService } from '../../../core/services/config.service';
 import { Amenity } from '../../../core/models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AmenityService {
-  private readonly apiUrl = `${environment.apiUrl}/amenities`;
+  private configService = inject(ConfigService);
   private http = inject(HttpClient);
+
+  private get apiUrl(): string {
+    return `${this.configService.apiUrl}/amenities`;
+  }
 
   getAmenities(): Observable<Amenity[]> {
     return this.http.get<Amenity[]>(this.apiUrl);
