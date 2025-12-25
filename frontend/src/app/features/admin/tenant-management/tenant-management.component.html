@@ -1,0 +1,208 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Tenant Management</h1>
+  </div>
+
+  @if (isLoading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else if (error()) {
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      {{ error() }}
+      <button (click)="loadTenants()" class="ml-4 underline">Retry</button>
+    </div>
+  } @else {
+    @if (tenants().length === 0) {
+      <div class="bg-white rounded-lg shadow p-8 text-center">
+        <p class="text-gray-500">No tenants with active leases found.</p>
+      </div>
+    } @else {
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active Leases</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            @for (tenant of tenants(); track tenant.id) {
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ tenant.id }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ tenant.name }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ tenant.email }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ tenant.phone || '-' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    {{ getActiveLeaseCount(tenant) }} active
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button (click)="viewTenantDetails(tenant)"
+                          class="text-blue-600 hover:text-blue-900">
+                    View Details
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Tenant Details Modal -->
+  @if (showDetailModal()) {
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-medium text-gray-900">Tenant Details</h3>
+          <button (click)="closeDetailModal()" class="text-gray-400 hover:text-gray-600">
+            <span class="text-2xl">&times;</span>
+          </button>
+        </div>
+
+        @if (isLoadingDetails()) {
+          <div class="py-8">
+            <app-loading-spinner></app-loading-spinner>
+          </div>
+        } @else if (selectedTenantDetails()) {
+          <div class="space-y-6">
+            <!-- User Info -->
+            <div class="bg-gray-50 p-4 rounded-md">
+              <h4 class="font-medium text-gray-900 mb-2">User Information</h4>
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span class="text-gray-500">Name:</span>
+                  <span class="ml-2 text-gray-900">{{ selectedTenantDetails()!.user.name }}</span>
+                </div>
+                <div>
+                  <span class="text-gray-500">Email:</span>
+                  <span class="ml-2 text-gray-900">{{ selectedTenantDetails()!.user.email }}</span>
+                </div>
+                <div>
+                  <span class="text-gray-500">Phone:</span>
+                  <span class="ml-2 text-gray-900">{{ selectedTenantDetails()!.user.phone || '-' }}</span>
+                </div>
+                <div>
+                  <span class="text-gray-500">Member Since:</span>
+                  <span class="ml-2 text-gray-900">{{ formatDate(selectedTenantDetails()!.user.created_at) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Leases -->
+            <div>
+              <h4 class="font-medium text-gray-900 mb-2">Leases</h4>
+              @if (selectedTenantDetails()!.leases.length === 0) {
+                <p class="text-gray-500 text-sm">No leases found.</p>
+              } @else {
+                <div class="space-y-3">
+                  @for (lease of selectedTenantDetails()!.leases; track lease.id) {
+                    <div class="border rounded-md p-4">
+                      <div class="flex justify-between items-start">
+                        <div>
+                          <div class="font-medium text-gray-900">
+                            {{ lease.flat.tower_name }} - {{ lease.flat.unit_number }}
+                          </div>
+                          <div class="text-sm text-gray-500">
+                            Floor {{ lease.flat.floor }} | {{ lease.flat.bedrooms }} bed
+                          </div>
+                        </div>
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                              [class]="lease.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+                          {{ lease.status | titlecase }}
+                        </span>
+                      </div>
+                      <div class="mt-2 text-sm text-gray-600">
+                        <span>Start: {{ formatDate(lease.start_date) }}</span>
+                        @if (lease.end_date) {
+                          <span class="ml-4">End: {{ formatDate(lease.end_date) }}</span>
+                        }
+                        <span class="ml-4">Rent: ${{ lease.monthly_rent | number:'1.0-0' }}/month</span>
+                      </div>
+                      @if (lease.status === 'active') {
+                        <div class="mt-3">
+                          <button (click)="confirmTerminateLease(lease.id)"
+                                  class="text-sm text-red-600 hover:text-red-900">
+                            Terminate Lease
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Payment History -->
+            @if (selectedTenantDetails()!.payment_history && selectedTenantDetails()!.payment_history.length > 0) {
+              <div>
+                <h4 class="font-medium text-gray-900 mb-2">Payment History (Mock)</h4>
+                <div class="overflow-x-auto">
+                  <table class="min-w-full text-sm">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Month</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Amount</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                      @for (payment of selectedTenantDetails()!.payment_history; track payment.month) {
+                        <tr>
+                          <td class="px-4 py-2 text-gray-900">{{ payment.month }}</td>
+                          <td class="px-4 py-2 text-gray-900">${{ payment.amount | number:'1.0-0' }}</td>
+                          <td class="px-4 py-2">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                  [class]="payment.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'">
+                              {{ payment.status | titlecase }}
+                            </span>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="mt-6 flex justify-end">
+            <button (click)="closeDetailModal()"
+                    class="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md transition-colors">
+              Close
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Terminate Lease Confirmation Modal -->
+  @if (showTerminateConfirm()) {
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-[60]">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Terminate Lease</h3>
+          <p class="text-gray-500 mb-6">
+            Are you sure you want to terminate this lease? This will mark the flat as available again.
+          </p>
+          <div class="flex justify-center space-x-3">
+            <button (click)="cancelTerminate()"
+                    class="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md transition-colors">
+              Cancel
+            </button>
+            <button (click)="terminateLease()" [disabled]="isTerminating()"
+                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors disabled:opacity-50">
+              {{ isTerminating() ? 'Terminating...' : 'Terminate' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

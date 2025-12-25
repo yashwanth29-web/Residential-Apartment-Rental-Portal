@@ -1,0 +1,135 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Booking Management</h1>
+    <div class="flex items-center space-x-4">
+      <label class="text-sm font-medium text-gray-700">Filter:</label>
+      <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()"
+              class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="all">All Bookings</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="declined">Declined</option>
+      </select>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else if (error()) {
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      {{ error() }}
+      <button (click)="loadBookings()" class="ml-4 underline">Retry</button>
+    </div>
+  } @else {
+    @if (filteredBookings().length === 0) {
+      <div class="bg-white rounded-lg shadow p-8 text-center">
+        <p class="text-gray-500">No bookings found.</p>
+      </div>
+    } @else {
+      <div class="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Flat</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested Date</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            @for (booking of filteredBookings(); track booking.id) {
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.id }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900">{{ booking.flat.tower_name }} - {{ booking.flat.unit_number }}</div>
+                  <div class="text-sm text-gray-500">{{ booking.flat.bedrooms }} bed, {{ booking.flat.bathrooms }} bath</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  @if (booking.user) {
+                    <div class="text-sm font-medium text-gray-900">{{ booking.user.name }}</div>
+                    <div class="text-sm text-gray-500">{{ booking.user.email }}</div>
+                  } @else {
+                    <div class="text-sm text-gray-500">User #{{ booking.user_id }}</div>
+                  }
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ formatDate(booking.requested_date) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ formatDate(booking.created_at) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                        [class]="getStatusBadgeClass(booking.status)">
+                    {{ booking.status | titlecase }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  @if (booking.status === 'pending') {
+                    <button (click)="openConfirmModal(booking, 'approve')"
+                            [disabled]="processingBookingId() === booking.id"
+                            class="text-green-600 hover:text-green-900 mr-4 disabled:opacity-50">
+                      {{ processingBookingId() === booking.id ? 'Processing...' : 'Approve' }}
+                    </button>
+                    <button (click)="openConfirmModal(booking, 'decline')"
+                            [disabled]="processingBookingId() === booking.id"
+                            class="text-red-600 hover:text-red-900 disabled:opacity-50">
+                      Decline
+                    </button>
+                  } @else if (booking.status === 'approved' && booking.lease) {
+                    <span class="text-gray-500 text-xs">
+                      Lease #{{ booking.lease.id }}
+                    </span>
+                  } @else {
+                    <span class="text-gray-400">-</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Confirmation Modal -->
+  @if (showConfirmModal()) {
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">
+            {{ confirmAction() === 'approve' ? 'Approve Booking' : 'Decline Booking' }}
+          </h3>
+          @if (selectedBooking()) {
+            <div class="text-left bg-gray-50 p-4 rounded-md mb-4">
+              <p class="text-sm"><span class="font-medium">Flat:</span> {{ selectedBooking()!.flat.tower_name }} - {{ selectedBooking()!.flat.unit_number }}</p>
+              <p class="text-sm"><span class="font-medium">Rent:</span> ${{ selectedBooking()!.flat.rent | number:'1.0-0' }}/month</p>
+              <p class="text-sm"><span class="font-medium">Requested Date:</span> {{ formatDate(selectedBooking()!.requested_date) }}</p>
+            </div>
+          }
+          <p class="text-gray-500 mb-6">
+            @if (confirmAction() === 'approve') {
+              This will create a lease and mark the flat as unavailable.
+            } @else {
+              This will decline the booking request.
+            }
+          </p>
+          <div class="flex justify-center space-x-3">
+            <button (click)="closeConfirmModal()"
+                    class="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md transition-colors">
+              Cancel
+            </button>
+            <button (click)="confirmBookingAction()"
+                    [class]="confirmAction() === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'"
+                    class="px-4 py-2 text-white rounded-md transition-colors">
+              {{ confirmAction() === 'approve' ? 'Approve' : 'Decline' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

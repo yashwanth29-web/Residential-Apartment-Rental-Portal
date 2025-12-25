@@ -1,0 +1,244 @@
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Back Button -->
+  <a routerLink="/flats" class="inline-flex items-center text-blue-600 hover:text-blue-700 mb-6">
+    <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    </svg>
+    Back to Flats
+  </a>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="flex justify-center py-12">
+      <app-loading-spinner></app-loading-spinner>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+      <svg class="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <p class="text-red-700">{{ error() }}</p>
+      <a routerLink="/flats" class="mt-4 inline-block text-blue-600 hover:text-blue-700">
+        Browse other flats
+      </a>
+    </div>
+  }
+
+  <!-- Flat Details -->
+  @if (!isLoading() && !error() && flat()) {
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+      <!-- Header Image -->
+      <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-64 flex items-center justify-center">
+        <svg class="h-32 w-32 text-white opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      </div>
+
+      <div class="p-8">
+        <!-- Title and Status -->
+        <div class="flex justify-between items-start mb-6">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">Unit {{ flat()!.unit_number }}</h1>
+            <p class="text-lg text-gray-600 mt-1">{{ flat()!.tower_name }} • Floor {{ flat()!.floor }}</p>
+          </div>
+          @if (flat()!.is_available) {
+            <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
+              Available
+            </span>
+          } @else if (userBooking()) {
+            <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+              Your Flat
+            </span>
+          } @else {
+            <span class="bg-red-100 text-red-800 text-sm font-medium px-3 py-1 rounded-full">
+              Unavailable
+            </span>
+          }
+        </div>
+
+        <!-- Price -->
+        <div class="mb-8">
+          <span class="text-4xl font-bold text-blue-600">${{ flat()!.rent | number }}</span>
+          <span class="text-gray-500 text-lg">/month</span>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <svg class="h-8 w-8 mx-auto text-blue-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <p class="text-2xl font-bold text-gray-900">{{ flat()!.bedrooms }}</p>
+            <p class="text-sm text-gray-500">{{ flat()!.bedrooms === 1 ? 'Bedroom' : 'Bedrooms' }}</p>
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <svg class="h-8 w-8 mx-auto text-blue-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+            </svg>
+            <p class="text-2xl font-bold text-gray-900">{{ flat()!.bathrooms }}</p>
+            <p class="text-sm text-gray-500">{{ flat()!.bathrooms === 1 ? 'Bathroom' : 'Bathrooms' }}</p>
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <svg class="h-8 w-8 mx-auto text-blue-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <p class="text-2xl font-bold text-gray-900">{{ flat()!.floor }}</p>
+            <p class="text-sm text-gray-500">Floor</p>
+          </div>
+
+          @if (flat()!.area_sqft) {
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+              <svg class="h-8 w-8 mx-auto text-blue-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+              <p class="text-2xl font-bold text-gray-900">{{ flat()!.area_sqft | number }}</p>
+              <p class="text-sm text-gray-500">Sq Ft</p>
+            </div>
+          }
+        </div>
+
+        <!-- Tower Amenities Section -->
+        @if (amenities().length > 0) {
+          <div class="border-t border-gray-200 pt-8 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Tower Amenities</h2>
+            <p class="text-gray-600 mb-6">Amenities available in {{ flat()!.tower_name }}.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              @for (amenity of amenities(); track amenity.id) {
+                <div class="bg-gray-50 rounded-lg p-4 flex items-start space-x-4">
+                  <div class="flex-shrink-0">
+                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      @switch (amenity.type) {
+                        @case ('gym') {
+                          <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h4v12H4zM16 6h4v12h-4zM8 10h8v4H8z" />
+                          </svg>
+                        }
+                        @case ('pool') {
+                          <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                          </svg>
+                        }
+                        @case ('parking') {
+                          <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 4h8m-8 4h8M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                          </svg>
+                        }
+                        @default {
+                          <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
+                          </svg>
+                        }
+                      }
+                    </div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900">{{ amenity.name }}</p>
+                    @if (amenity.description) {
+                      <p class="text-sm text-gray-500">{{ amenity.description }}</p>
+                    }
+                    <div class="mt-1 flex flex-wrap gap-2">
+                      @if (amenity.hours) {
+                        <span class="inline-flex items-center text-xs text-gray-500">
+                          <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {{ amenity.hours }}
+                        </span>
+                      }
+                      @if (amenity.fee) {
+                        <span class="inline-flex items-center text-xs text-gray-500">
+                          <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          ${{ amenity.fee }}/month
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center text-xs text-green-600">
+                          <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                          </svg>
+                          Free
+                        </span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Booking Section -->
+        <div class="border-t border-gray-200 pt-8">
+          @if (flat()!.is_available) {
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Interested in this flat?</h2>
+            <p class="text-gray-600 mb-6">
+              Submit a booking request and our team will review your application. You'll be notified once your request is processed.
+            </p>
+            
+            @if (isAuthenticated()) {
+              <button (click)="bookFlat()" [disabled]="isBooking()"
+                      class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md text-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                @if (isBooking()) {
+                  <span class="flex items-center justify-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting...
+                  </span>
+                } @else {
+                  Request Booking
+                }
+              </button>
+            } @else {
+              <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p class="text-yellow-800">
+                  Please <a routerLink="/login" class="font-medium underline">login</a> or 
+                  <a routerLink="/register" class="font-medium underline">register</a> to book this flat.
+                </p>
+              </div>
+            }
+          } @else {
+            @if (userBooking()) {
+              <!-- User's own booking -->
+              <div class="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+                <svg class="mx-auto h-12 w-12 text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">This is your flat!</h3>
+                <p class="text-gray-600 mb-4">Your booking has been approved. Welcome home!</p>
+                <a routerLink="/bookings" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+                  <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  View your bookings
+                </a>
+              </div>
+            } @else {
+              <!-- Booked by another tenant -->
+              <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">This flat is currently unavailable</h3>
+                <p class="text-gray-600 mb-4">This flat has been booked by another tenant.</p>
+                <a routerLink="/flats" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+                  <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  Browse available flats
+                </a>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

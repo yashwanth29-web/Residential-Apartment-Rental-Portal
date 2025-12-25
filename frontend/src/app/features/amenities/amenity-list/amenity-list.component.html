@@ -1,0 +1,100 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Amenities</h1>
+    <p class="mt-2 text-gray-600">Explore the facilities available at our property.</p>
+  </div>
+
+  <!-- Type Filter Tabs -->
+  <div class="mb-8">
+    <div class="border-b border-gray-200">
+      <nav class="-mb-px flex space-x-8">
+        @for (type of amenityTypes; track type.value) {
+          <button (click)="filterByType(type.value)"
+                  [class]="selectedType() === type.value 
+                    ? 'border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'">
+            {{ type.label }}
+          </button>
+        }
+      </nav>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="flex justify-center py-12">
+      <app-loading-spinner></app-loading-spinner>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Amenities Grid -->
+  @if (!isLoading() && !error()) {
+    @if (filteredAmenities().length === 0) {
+      <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No amenities found</h3>
+        <p class="mt-1 text-sm text-gray-500">No amenities available in this category.</p>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (amenity of filteredAmenities(); track amenity.id) {
+          <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-24 flex items-center justify-center">
+              <svg class="h-12 w-12 text-white opacity-75" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getTypeIcon(amenity.type)" />
+              </svg>
+            </div>
+            <div class="p-6">
+              <div class="flex justify-between items-start mb-3">
+                <h3 class="text-lg font-semibold text-gray-900">{{ amenity.name }}</h3>
+                <span [class]="'text-xs font-medium px-2.5 py-0.5 rounded capitalize ' + getTypeColor(amenity.type)">
+                  {{ amenity.type }}
+                </span>
+              </div>
+              
+              @if (amenity.description) {
+                <p class="text-gray-600 text-sm mb-4">{{ amenity.description }}</p>
+              }
+
+              <div class="space-y-2 text-sm">
+                @if (amenity.hours) {
+                  <div class="flex items-center text-gray-600">
+                    <svg class="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {{ amenity.hours }}
+                  </div>
+                }
+                
+                @if (amenity.fee !== null && amenity.fee > 0) {
+                  <div class="flex items-center text-gray-600">
+                    <svg class="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    ${{ amenity.fee }}/month
+                  </div>
+                } @else {
+                  <div class="flex items-center text-green-600">
+                    <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Free for residents
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
